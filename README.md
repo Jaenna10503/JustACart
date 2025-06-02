@@ -20,7 +20,7 @@ Option 1 will try to find a horse it can use within a certain distance, and tran
 
 Option 2 will give the player access to the cart's cargo. The cargo remains accessible with any cart summoned by the mod.
 
-Option 3 wwill try to find a horse it can use within a certain distance, and transports the horse in front of the cart. (This is basically the same as option 1, except it won't do any tethering/untethering.)
+Option 3 will try to find a horse it can use within a certain distance, and transports the horse in front of the cart. (This is basically the same as option 1, except it won't do any tethering/untethering.)
 
 Option 4 will simply close the menu without anything happening.
 
