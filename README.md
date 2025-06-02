@@ -42,4 +42,8 @@ It's recommended to make sure you're facing forward, on a flat stretch of road b
 
 Also make sure the cart has enough room in front of it before moving the horse in front of it. For the same reason.
 
+Due to the inherently janky physics of the cart, it's recommended that you stick to flat terrain, preferably roads, while traveling with your horse tethered to the cart. If you need to go to or through rough terrain, it's best to leave the cart waiting until you come back.
+
+Additionally, when traveling through narrower or populated areas, it's best to slow down and pass the area at walking pace. The cart **will** damage or even kill other actors who get (accidentally) trampled by the cart, when moving at normal/running or sprinting pace.
+
 The mod should be compatible with any **ownable** horse in the game, and is probably compatible with most mods that add ownable horses. The mod works as a standalone, but is also designed to be (as) compatible (as possible) with mods that change/enhance horse behaviour/utility. I've mainly tested the mod with [Simplest Horses (and other mounts)](https://www.nexusmods.com/skyrimspecialedition/mods/54225). If you find issues with compatibility with similar mods, please leave a comment on this mod's Nexus page. I'll try to investigate the issue, and update this mod to become compatible if I can.
