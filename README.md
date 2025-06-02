@@ -1,4 +1,4 @@
-# [JustACart](https://www.nexusmods.com/skyrimspecialedition/mods/151651)
+# JustACart
 Skyrim SE mod that gives you a cart for your horse to pull
 
 ## Dependencies
@@ -47,6 +47,8 @@ Due to the inherently janky physics of the cart, it's recommended that you stick
 Additionally, when traveling through narrower or populated areas, it's best to slow down and pass the area at walking pace. The cart **will** damage or even kill other actors who get (accidentally) trampled by the cart, when moving at normal/running or sprinting pace.
 
 The mod should be compatible with any **ownable** horse in the game, and is probably compatible with most mods that add ownable horses. The mod works as a standalone, but is also designed to be (as) compatible (as possible) with mods that change/enhance horse behaviour/utility. I've mainly tested the mod with [Simplest Horses (and other mounts)](https://www.nexusmods.com/skyrimspecialedition/mods/54225). If you find issues with compatibility with similar mods, please leave a comment on this mod's Nexus page. I'll try to investigate the issue, and update this mod to become compatible if I can.
+
+## Download Link: https://www.nexusmods.com/skyrimspecialedition/mods/151651
 
 ## Additional Thanks
 
