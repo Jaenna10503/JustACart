@@ -34,6 +34,9 @@
         <!-- If you have any texture files, uncomment the following to create a Textures .bsa archive with texture files -->
         <!-- <Package Name="@ModName - Textures" RootDir=".">
             <Include>*.dds</Include>
+        </Package>
+        <Package Name="@ModName - Meshes" RootDir=".">
+            <Include>*.nif</Include>
         </Package> -->
     </Packages>
     <!-- The following section is for .zip archive. You can enable it by setting Zip="true" in the PapyrusProject -->
@@ -42,6 +45,9 @@
             <Include>@ModName.esp</Include>
             <Include NoRecurse="true">*.bsa</Include>
             <Match In="Source/Scripts">*.psc</Match>
+            <Match In="textures\!!sr\clutter\carts">*.dds</Match>
+            <Match In="textures\!!sr\materials\metal">*.dds</Match>
+            <Match In="meshes\furniture">*.nif</Match>
         </ZipFile>
     </ZipFiles>
     <!-- This will remove any *.bsa files in this directory *after* the build, if there are any. Set UseInBuild="false" to disable. -->

@@ -1,4 +1,4 @@
-Scriptname JustACartCarriageScript extends ObjectReference  
+Scriptname JustACartCarriageScript extends ObjectReference
 
 
 ;/ TO DO LIST: 
@@ -20,7 +20,9 @@ GlobalVariable property Riding auto
 GlobalVariable property Tethered auto
 GlobalVariable property Keymap auto
 GlobalVariable property QuickUntetherEnabled auto
+GlobalVariable property LimitedInventoryEnabled auto
 Faction property HorseFaction auto
+Actor property LimitedInventory auto
 
 ; Variables
 int tempKeyMap
@@ -63,7 +65,7 @@ EndFunction
 ; Events
 
 Event OnActivate(ObjectReference akActionRef)
-    Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 1024.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
+    Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 2048.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
     Actor horse = horseList[0]
     if (Game.GetPlayer().IsOnMount())
         Riding.SetValueInt(1)
@@ -85,6 +87,7 @@ Event OnActivate(ObjectReference akActionRef)
             RefreshCartAndHorse(horse)
             Utility.Wait(0.1)
             BringHorseToCart(horse)
+            Utility.Wait(0.1)
             self.SetMotionType(Motion_Dynamic)
             self.TetherToHorse(horse)
             if (QuickUntetherEnabled.GetValueInt() == 1)
@@ -96,7 +99,11 @@ Event OnActivate(ObjectReference akActionRef)
             Tethered.SetValueInt(1)
         endif
     elseif (optionSelected == 1) ; Access inventory
-        Inventory.Activate(Game.GetPlayer(), true)
+        if (LimitedInventoryEnabled.GetValueInt() == 0)
+            Inventory.Activate(Game.GetPlayer(), true)
+        elseif (LimitedInventoryEnabled.GetValueInt() == 1)
+            LimitedInventory.OpenInventory(true)
+        endif
     elseif (optionSelected == 2) ; Summon Horse
         if ((Riding.GetValueInt() == 1 || Tethered.GetValueInt() == 1) && !horse.IsDead())
             Debug.Notification("Your horse is fine where she is.")

@@ -16,25 +16,29 @@ Activating the cart gives four options:
 3. Move the horse in front of the cart.
 4. Cancel.
 
-Option 1 will try to find a horse it can use within a certain distance, and transports the horse in front of the cart and tethers her if a usable horse has been found. If chosen while a horse is tethered, the horse is released from the cart, and the cart will become fixed/stop moving until a horse is tethered again.
+- Option 1 will try to find a horse it can use within a certain distance, and transports the horse in front of the cart and tethers her if a usable horse has been found. If chosen while a horse is tethered, the horse is released from the cart, and the cart will become fixed/stop moving until a horse is tethered again.
+- Option 2 will give the player access to the cart's cargo. The cargo remains accessible with any cart summoned by the mod.
+- Option 3 will try to find a horse it can use within a certain distance, and transports the horse in front of the cart. (This is basically the same as option 1, except it won't do any tethering/untethering.)
+- Option 4 will simply close the menu without anything happening.
 
-Option 2 will give the player access to the cart's cargo. The cargo remains accessible with any cart summoned by the mod.
-
-Option 3 will try to find a horse it can use within a certain distance, and transports the horse in front of the cart. (This is basically the same as option 1, except it won't do any tethering/untethering.)
-
-Option 4 will simply close the menu without anything happening.
+Next to the "Bring Cart to Player" button is a "Delete Cart" button. This exists primarily in case an update to the mod requires the old carriage to no longer exist, or if you intend to use the optional feature (below) to switch cart model. Your stored inventory will be unaffected and completely safe, and can still be accessed with your new cart.
 
 ### Future Plans for Core Features
 
 Adding a lore-friendly way to get the cart without needing the MCM button for the first spawning.
+Possibly compatibility with SkyrimVR (If I can figure it out, which is a big if.)
 
 ## Optional Settings
 
-The MCM includes an option to allow the player to untether the horse from the cart on the fly, without dismounting first. This is done with a hotkey, which can be changed through the MCM (Default: G)
+- The MCM includes an option to allow the player to untether the horse from the cart on the fly, without dismounting first. This is done with a hotkey, which can be changed through the MCM (Default: G)
+
+- You can switch between unlimited (default) and limited storage. Limited storage has a weight limit (default 2000), and this limit can be changed with a slider (from 0 to 10,000 in increments of 50). These two types of storage exist separately, so switching from one to the other temporarily prevents you from accessing the other storage (and items contained therein) until you switch back. Switching back and forth during the course of gameplay is (should be) completely safe.
+
+- An additional optional toggle to switch to the base game model for the cart. By default, the mod uses a custom model based on models from [Snazzy Diverse Carriages](https://www.nexusmods.com/skyrimspecialedition/mods/112041). You can switch between the base game and custom models by turning the toggle on and off. If you already have a cart, you'll need to delete it with the MCM button first and get a new one.
 
 ### Future Plans for Optional Features
 
-Optional realism settings, such as limits to the weight the cart's cargo can hold, and temporary reduction to the movement speed of the tethered horse while above a specific weight limit (based on the extra weight over the limit, increasing with increased weight).
+Possibly further realism toggles.
 
 ## Notes on the use of the mod
 
@@ -46,10 +50,12 @@ Due to the inherently janky physics of the cart, it's recommended that you stick
 
 Additionally, when traveling through narrower or populated areas, it's best to slow down and pass the area at walking pace. The cart **will** damage or even kill other actors who get (accidentally) trampled by the cart, when moving at normal/running or sprinting pace.
 
-The mod should be compatible with any **ownable** horse in the game, and is probably compatible with most mods that add ownable horses. The mod works as a standalone, but is also designed to be (as) compatible (as possible) with mods that change/enhance horse behaviour/utility. I've mainly tested the mod with [Simplest Horses (and other mounts)](https://www.nexusmods.com/skyrimspecialedition/mods/54225). If you find issues with compatibility with similar mods, please leave a comment on this mod's Nexus page. I'll try to investigate the issue, and update this mod to become compatible if I can.
+The mod should be compatible with any **ownable** horse in the game, and is compatible with at least some mods that add horses. The mod works as a standalone, but is also designed to be (as) compatible (as possible) with mods that change/enhance horse behaviour/utility. I've mainly tested the mod with [Simplest Horses (and other mounts)](https://www.nexusmods.com/skyrimspecialedition/mods/54225). If you find issues with compatibility with similar mods, please leave a comment on this mod's Nexus page. I'll try to investigate the issue, and update this mod to become compatible if I can.
 
 ## Download Link: https://www.nexusmods.com/skyrimspecialedition/mods/151651
 
 ## Additional Thanks
+
+Thank you to [gutmaw](https://next.nexusmods.com/profile/gutmaw) for permission to use his models from [Snazzy Diverse Carriages](https://www.nexusmods.com/skyrimspecialedition/mods/112041).
 
 This mod is heavily inspired by [Dragonkiller Cart SE](https://www.nexusmods.com/skyrimspecialedition/mods/6521) and [Dovah Rider Cart](https://www.nexusmods.com/skyrimspecialedition/mods/52931). Especially Dragonkiller Cart. That mod opened my eyes to what's possible in modding Skyrim back in the day, good 10 years ago. Big thank you to MrowPurr of [SkyrimScripting](https://www.youtube.com/@SkyrimScripting) for the great tutorials that finally helped me learn the basics of Papyrus and Creation Kit, and to all the great folks, admins, helpers, mod and modlist authors and [Biggie](https://next.nexusmods.com/profile/dabiggieboss) himself at the Modding Bungalo (Linking [LoreRim's](https://lorerim.com/) website here, specifically, because that's the modlist that I **really** hyperfixated on). Y'all helped me gather up the courage to finally try making something myself.
