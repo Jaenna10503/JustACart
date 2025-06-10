@@ -21,6 +21,7 @@ GlobalVariable property Tethered auto
 GlobalVariable property Keymap auto
 GlobalVariable property QuickUntetherEnabled auto
 GlobalVariable property LimitedInventoryEnabled auto
+GlobalVariable property WeightLimit auto
 Faction property HorseFaction auto
 Actor property LimitedInventory auto
 
@@ -72,6 +73,7 @@ Event OnActivate(ObjectReference akActionRef)
     else
         Riding.SetValueInt(0)
     endif
+    LimitedInventory.SetActorValue("CarryWeight", WeightLimit.GetValueInt())
     int optionSelected = JustACartMessage.Show()
     if (optionSelected == 0) ; Tether/untether
         if (horse == none) ; Test if specific horse exists

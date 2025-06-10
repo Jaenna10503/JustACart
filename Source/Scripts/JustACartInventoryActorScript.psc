@@ -1,4 +1,4 @@
-Scriptname JustACartInventoryActorScript extends Actor
+Scriptname JustACartInventoryActorScript extends Actor ; This script might be redundant tbh
 
 ; Properties
 

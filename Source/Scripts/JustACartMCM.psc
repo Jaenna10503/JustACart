@@ -23,9 +23,15 @@ int limitedInventoryToggleID
 int limitedInventorySliderID
 int limitedInventoryInt
 int limitedInventoryFlags
+int cartSpawnerFlags
 int cartSpawnerButtonID
 int oldCartToggleID
+int deleteCartFlags
 int deleteCartButtonID
+string deleteCartString
+string cartSpawnerString
+bool deleting = false
+bool summoning = false
 
 ; Functions
 
@@ -42,6 +48,52 @@ Function MoveRefToPositionRelativeTo(ObjectReference akSubject, ObjectReference 
 	endif
 EndFunction
 
+; Summons the cart
+Function SummonCart()
+    if (Game.GetPlayer().GetWorldSpace() == UsableWorldspaces) ; We're not allowing summoning anywhere other than main Tamriel worldspace
+        ObjectReference marker = PlayerAlias.GetActorRef().PlaceAtMe(XMarker as form, 1, false, false)
+        MoveRefToPositionRelativeTo(marker, PlayerAlias.GetActorRef() , 384)
+        ObjectReference newCarriageref ; Temporary object reference variable
+        if (CarriageAlias.GetRef() == none) ; If no carriage, give one
+            if (bOldCart.GetValueInt() == 0) ; See old cart toggle
+                newCarriageref = marker.PlaceAtMe(NewCarriage)
+            else
+                newCarriageref = marker.PlaceAtMe(OldCarriage)
+            endif
+            Utility.Wait(0.1)
+            newCarriageref.SetMotionType(4) ; Set cart immobile
+            marker.DisableNoWait()
+            marker.Delete()
+            CarriageAlias.ForceRefTo(newCarriageref) ; Set carriage alias to new cart
+        elseif (CarriageAlias.GetRef() != none)
+            CarriageAlias.GetRef().MoveTo(marker)
+            CarriageAlias.GetRef().SetMotionType(4)
+            marker.DisableNoWait()
+            marker.Delete()
+        endif
+        newCarriageref = none ; Clean up the object reference variable because we no longer need it... Might be unnecessary
+    else
+        Debug.Notification("You can't summon a cart here.")
+    endif
+    cartSpawnerFlags = OPTION_FLAG_NONE ; Re-enable summoning option
+EndFunction
+
+; Deletes the cart
+Function DeleteCart()
+    int optionSelected = DeleteMessage.Show()
+    if (optionSelected == 0)
+        ; return
+    elseif (optionSelected == 1)
+        ObjectReference deletedCarriage = CarriageAlias.GetRef() ; Temporary object reference variable
+        Utility.Wait(0.1)
+        CarriageAlias.Clear() ; Clear alias so we can delete
+        Utility.Wait(0.1)
+        deletedCarriage.DisableNoWait()
+        deletedCarriage.Delete()
+    endif
+    cartSpawnerFlags = OPTION_FLAG_NONE ; Re-enable deleting option
+EndFunction
+
 ; Events
 
 Event OnPageReset(string page)
@@ -49,65 +101,81 @@ Event OnPageReset(string page)
 
     int cartSpawnerHeaderID = AddHeaderOption("Cart Control")
     AddEmptyOption()
-    cartSpawnerButtonID = AddTextOption("", "Bring Cart to Player")
-    deleteCartButtonID = AddTextOption("", "Delete Cart")
+
+    cartSpawnerString = "Bring Cart to Player"
+    if (summoning) ; If we're already summoning, change text.
+        cartSpawnerString = "Return to game to finish the process"
+    endif
+    cartSpawnerButtonID = AddTextOption("", cartSpawnerString, cartSpawnerFlags) ; Option always enabled, unless we're either summoning or deleting
+
+    deleteCartString = "Delete Cart"
+    if (CarriageAlias.GetRef() == none) ; If no carriage, option is disabled
+        deleteCartFlags = OPTION_FLAG_DISABLED
+    elseif (CarriageAlias.GetRef() != none)
+        if (deleting) ; If carriage and we're already deleting, change text. In this case, option is already disabled because we're currently deleting
+            deleteCartString = "Return to game to finish the process"
+        elseif (!summoning) ; If carriage and we're not doing anything, enable option
+            deleteCartFlags = OPTION_FLAG_NONE
+        endif
+    endif
+    deleteCartButtonID = AddTextOption("", deleteCartString, deleteCartFlags)
+
     int experimentalID = AddHeaderOption("Experimental Features")
     AddEmptyOption()
 
     if (bQuickUntether.GetValueInt() == 0)
-        quickUntetherFlags = OPTION_FLAG_DISABLED
+        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_DISABLED)
     elseif (bQuickUntether.GetValueInt() == 1)
-        quickUntetherFlags = OPTION_FLAG_NONE
+        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_NONE)
     endif
-    quickUntetherToggleID = AddToggleOption("Quick Untether", bQuickUntether.GetValueInt())
-    quickUntetherKeyID = AddKeyMapOption("Quick Untether Hotkey", keyQuickUntether.GetValueInt(), quickUntetherFlags)
+    quickUntetherToggleID = AddToggleOption("Quick Untether", bQuickUntether.GetValueInt()) ; Whether quick untether is on or not
+    quickUntetherKeyID = AddKeyMapOption("Quick Untether Hotkey", keyQuickUntether.GetValueInt(), quickUntetherFlags) ; Which button quick untethers
+
     if (bLimitedInventory.GetValueInt() == 0)
         limitedInventoryFlags = OPTION_FLAG_DISABLED
     elseif (bLimitedInventory.GetValueInt() == 1)
         limitedInventoryFlags = OPTION_FLAG_NONE
     endif
-    limitedInventoryToggleID = AddToggleOption("Limited Inventory", bLimitedInventory.GetValueInt())
-    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", iLimitedInventory.GetValueInt() as float, "", limitedInventoryFlags)
-    oldCartToggleID = AddToggleOption("Use base game cart", bOldCart.GetValueInt())
+    limitedInventoryToggleID = AddToggleOption("Limited Inventory", bLimitedInventory.GetValueInt()) ; Whether limited inventory is on or not
+    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", iLimitedInventory.GetValueInt() as float, "", limitedInventoryFlags) ; Change inventory weight limit
+
+    oldCartToggleID = AddToggleOption("Use base game cart", bOldCart.GetValueInt()) ; What it says on the tin
 EndEvent
 
 Event OnOptionSelect(int option)
-    if (option == quickUntetherToggleID)
+    if (option == quickUntetherToggleID) ; Implementing quick untether toggle
         if (bQuickUntether.GetValueInt() == 0)
             bQuickUntether.SetValueInt(1)
         else
             bQuickUntether.SetValueInt(0)
         endif
-    elseif (option == cartSpawnerButtonID)
+    elseif (option == cartSpawnerButtonID) ; Implementing cart spawner button. We're doing something, so cart controls go off, and we're specifying that we're summoning
+        cartSpawnerFlags = OPTION_FLAG_DISABLED
+        deleteCartFlags = OPTION_FLAG_DISABLED
+        summoning = true
         RegisterForSingleUpdateGameTime(0.0) ; Putting the thing in a during game time event so that the player is more likely to see the error notification
-    elseif (option == deleteCartButtonID)
-        int optionSelected = DeleteMessage.Show()
-        if (optionSelected == 0)
-            ; return
-        elseif (optionSelected == 1)
-            ObjectReference deletedCarriage = CarriageAlias.GetRef()
-            CarriageAlias.Clear()
-            Utility.Wait(0.1)
-            deletedCarriage.DisableNoWait()
-            deletedCarriage.Delete()
-        endif
-    ElseIf (option == limitedInventoryToggleID)
+    elseif (option == deleteCartButtonID) ; Implementing cart delete button. We're doing something, so cart controls go off, and we're specifying that we're deleting
+        deleteCartFlags = OPTION_FLAG_DISABLED
+        cartSpawnerFlags = OPTION_FLAG_DISABLED
+        deleting = true
+        RegisterForSingleUpdateGameTime(0.0) ; This is more for symmetry and usefulness
+    ElseIf (option == limitedInventoryToggleID) ; Implementing limited inventory toggle
         if (bLimitedInventory.GetValueInt() == 0)
             bLimitedInventory.SetValueInt(1)
         else
             bLimitedInventory.SetValueInt(0)
         endif
-    ElseIf (option == oldCartToggleID)
+    ElseIf (option == oldCartToggleID) ; Implementing old cart toggle
         if (bOldCart.GetValueInt() == 0)
             bOldCart.SetValueInt(1)
         else
             bOldCart.SetValueInt(0)
         endif
     endif
-    ForcePageReset()
+    ForcePageReset() ; Make changes visible
 EndEvent
 
-Event OnOptionKeyMapChange(int option, int keyCode, string conflictControl, string conflictName)
+Event OnOptionKeyMapChange(int option, int keyCode, string conflictControl, string conflictName) ; Implementing quick untether key changing option.
     if (option == quickUntetherKeyID)
         bool continue = true
         if (conflictControl != "")
@@ -127,10 +195,10 @@ Event OnOptionKeyMapChange(int option, int keyCode, string conflictControl, stri
             keyQuickUntether.SetValueInt(keyCode)
         endif
     endif
-    ForcePageReset()
+    ForcePageReset() ; Make changes visible
 EndEvent
 
-Event OnOptionSliderOpen(int option)
+Event OnOptionSliderOpen(int option) ; Implementing limited inventory slider
     if (option == limitedInventorySliderID)
         SetSliderDialogStartValue(iLimitedInventory.GetValueInt() as float)
         SetSliderDialogDefaultValue(2000.0)
@@ -139,7 +207,7 @@ Event OnOptionSliderOpen(int option)
     endif
 EndEvent
 
-Event OnOptionSliderAccept (int option, float value)
+Event OnOptionSliderAccept (int option, float value) ; Ditto
     if (option == limitedInventorySliderID)
         iLimitedInventory.SetValueInt(value as int)
         SetSliderOptionValue(limitedInventorySliderID, iLimitedInventory.GetValueInt() as float)
@@ -147,7 +215,7 @@ Event OnOptionSliderAccept (int option, float value)
     endif
 EndEvent
 
-Event OnOptionHighlight (int option)
+Event OnOptionHighlight (int option) ; Quick explanation of what different options do
     if (option == quickUntetherToggleID)
         SetInfoText("Quickly untether your horse from the cart without dismounting.")
     elseif (option == cartSpawnerButtonID)
@@ -161,30 +229,12 @@ Event OnOptionHighlight (int option)
     endif
 EndEvent
 
-Event OnUpdateGameTime()
-    if (Game.GetPlayer().GetWorldSpace() == UsableWorldspaces)
-        ObjectReference marker = PlayerAlias.GetActorRef().PlaceAtMe(XMarker as form, 1, false, false)
-        MoveRefToPositionRelativeTo(marker, PlayerAlias.GetActorRef() , 384)
-        ObjectReference newCarriageref
-        if (CarriageAlias.GetRef() == none)
-            if (bOldCart.GetValueInt() == 0)
-                newCarriageref = marker.PlaceAtMe(NewCarriage)
-            elseif (bOldCart.GetValueInt() == 1)
-                newCarriageref = marker.PlaceAtMe(OldCarriage)
-            endif
-            Utility.Wait(0.1)
-            newCarriageref.SetMotionType(4)
-            marker.DisableNoWait()
-            marker.Delete()
-            CarriageAlias.ForceRefTo(newCarriageref)
-        elseif (CarriageAlias.GetRef() != none)
-            CarriageAlias.GetRef().MoveTo(marker)
-            CarriageAlias.GetRef().SetMotionType(4)
-            marker.DisableNoWait()
-            marker.Delete()
-        endif
-        newCarriage = none
-    else
-        Debug.Notification("You can't summon a cart here.")
+Event OnUpdateGameTime() ; Final implementation of summoning and deleting
+    if (summoning)
+        SummonCart()
+    elseif (deleting)
+        DeleteCart()
     endif
+    deleting = false
+    summoning = false ; We're no longer doing either of these, so switch both false so we can do them again. Note the lack of flag setting here, because we want to keep those two separate
 EndEvent
