@@ -2,10 +2,8 @@ Scriptname JustACartInventoryActorScript extends Actor ; This script might be re
 
 ; Properties
 
-GlobalVariable property WeightLimit auto
-
 ; Events
 
 Event OnInit()
-    self.SetActorValue("CarryWeight", WeightLimit.GetValueInt())
+    self.SetActorValue("CarryWeight", 2000)
 EndEvent

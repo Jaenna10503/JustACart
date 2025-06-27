@@ -4,15 +4,15 @@ Scriptname JustACartMCM extends SKI_ConfigBase
 GlobalVariable property bQuickUntether auto
 GlobalVariable property keyQuickUntether auto
 GlobalVariable property bLimitedInventory auto
-GlobalVariable property iLimitedInventory auto
 GlobalVariable property bOldCart auto
+GlobalVariable property bUseExperimentalHorseFinder auto
 Activator property OldCarriage auto
 Activator property NewCarriage auto
 ReferenceAlias property PlayerAlias auto
 Static property XMarker auto
 Worldspace property UsableWorldspaces auto
 Actor property LimitedInventoryActor auto
-ReferenceAlias property CarriageAlias auto
+; ReferenceAlias property CarriageAlias auto ; TO DO: Get rid of the alias, use a variable instead
 Message property DeleteMessage auto
 
 ; Variables
@@ -28,10 +28,13 @@ int cartSpawnerButtonID
 int oldCartToggleID
 int deleteCartFlags
 int deleteCartButtonID
+int horseFinderButtonID
+int inventoryLimit = 2000
 string deleteCartString
 string cartSpawnerString
 bool deleting = false
 bool summoning = false
+ObjectReference Carriage
 
 ; Functions
 
@@ -54,7 +57,7 @@ Function SummonCart()
         ObjectReference marker = PlayerAlias.GetActorRef().PlaceAtMe(XMarker as form, 1, false, false)
         MoveRefToPositionRelativeTo(marker, PlayerAlias.GetActorRef() , 384)
         ObjectReference newCarriageref ; Temporary object reference variable
-        if (CarriageAlias.GetRef() == none) ; If no carriage, give one
+        if (carriage == none) ; If no carriage, give one
             if (bOldCart.GetValueInt() == 0) ; See old cart toggle
                 newCarriageref = marker.PlaceAtMe(NewCarriage)
             else
@@ -64,10 +67,10 @@ Function SummonCart()
             newCarriageref.SetMotionType(4) ; Set cart immobile
             marker.DisableNoWait()
             marker.Delete()
-            CarriageAlias.ForceRefTo(newCarriageref) ; Set carriage alias to new cart
-        elseif (CarriageAlias.GetRef() != none)
-            CarriageAlias.GetRef().MoveTo(marker)
-            CarriageAlias.GetRef().SetMotionType(4)
+            carriage = newCarriageref ; Set carriage alias to new cart
+        elseif (carriage != none)
+            carriage.MoveTo(marker)
+            carriage.SetMotionType(4)
             marker.DisableNoWait()
             marker.Delete()
         endif
@@ -84,9 +87,9 @@ Function DeleteCart()
     if (optionSelected == 0)
         ; return
     elseif (optionSelected == 1)
-        ObjectReference deletedCarriage = CarriageAlias.GetRef() ; Temporary object reference variable
+        ObjectReference deletedCarriage = carriage ; Temporary object reference variable
         Utility.Wait(0.1)
-        CarriageAlias.Clear() ; Clear alias so we can delete
+        carriage = none ; Clear alias so we can delete
         Utility.Wait(0.1)
         deletedCarriage.DisableNoWait()
         deletedCarriage.Delete()
@@ -109,9 +112,9 @@ Event OnPageReset(string page)
     cartSpawnerButtonID = AddTextOption("", cartSpawnerString, cartSpawnerFlags) ; Option always enabled, unless we're either summoning or deleting
 
     deleteCartString = "Delete Cart"
-    if (CarriageAlias.GetRef() == none) ; If no carriage, option is disabled
+    if (carriage == none) ; If no carriage, option is disabled
         deleteCartFlags = OPTION_FLAG_DISABLED
-    elseif (CarriageAlias.GetRef() != none)
+    elseif (carriage != none)
         if (deleting) ; If carriage and we're already deleting, change text. In this case, option is already disabled because we're currently deleting
             deleteCartString = "Return to game to finish the process"
         elseif (!summoning) ; If carriage and we're not doing anything, enable option
@@ -137,9 +140,11 @@ Event OnPageReset(string page)
         limitedInventoryFlags = OPTION_FLAG_NONE
     endif
     limitedInventoryToggleID = AddToggleOption("Limited Inventory", bLimitedInventory.GetValueInt()) ; Whether limited inventory is on or not
-    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", iLimitedInventory.GetValueInt() as float, "", limitedInventoryFlags) ; Change inventory weight limit
+    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", inventoryLimit, "{0}", limitedInventoryFlags) ; Change inventory weight limit
 
     oldCartToggleID = AddToggleOption("Use base game cart", bOldCart.GetValueInt()) ; What it says on the tin
+    horseFinderButtonID = AddToggleOption("Use expanded compatibility horse finder", bUseExperimentalHorseFinder.GetValueInt())
+    LimitedInventoryActor.SetActorValue("CarryWeight", inventoryLimit)
 EndEvent
 
 Event OnOptionSelect(int option)
@@ -159,17 +164,23 @@ Event OnOptionSelect(int option)
         cartSpawnerFlags = OPTION_FLAG_DISABLED
         deleting = true
         RegisterForSingleUpdateGameTime(0.0) ; This is more for symmetry and usefulness
-    ElseIf (option == limitedInventoryToggleID) ; Implementing limited inventory toggle
+    elseif (option == limitedInventoryToggleID) ; Implementing limited inventory toggle
         if (bLimitedInventory.GetValueInt() == 0)
             bLimitedInventory.SetValueInt(1)
         else
             bLimitedInventory.SetValueInt(0)
         endif
-    ElseIf (option == oldCartToggleID) ; Implementing old cart toggle
+    elseif (option == oldCartToggleID) ; Implementing old cart toggle
         if (bOldCart.GetValueInt() == 0)
             bOldCart.SetValueInt(1)
         else
             bOldCart.SetValueInt(0)
+        endif
+    elseif (option == horseFinderButtonID)
+        if (bUseExperimentalHorseFinder.GetValueInt() == 0)
+            bUseExperimentalHorseFinder.SetValueInt(1)
+        else
+            bUseExperimentalHorseFinder.SetValueInt(0)
         endif
     endif
     ForcePageReset() ; Make changes visible
@@ -200,7 +211,7 @@ EndEvent
 
 Event OnOptionSliderOpen(int option) ; Implementing limited inventory slider
     if (option == limitedInventorySliderID)
-        SetSliderDialogStartValue(iLimitedInventory.GetValueInt() as float)
+        SetSliderDialogStartValue(inventoryLimit as float)
         SetSliderDialogDefaultValue(2000.0)
         SetSliderDialogRange(0.0, 10000.0)
         SetSliderDialogInterval(50.0)
@@ -209,9 +220,8 @@ EndEvent
 
 Event OnOptionSliderAccept (int option, float value) ; Ditto
     if (option == limitedInventorySliderID)
-        iLimitedInventory.SetValueInt(value as int)
-        SetSliderOptionValue(limitedInventorySliderID, iLimitedInventory.GetValueInt() as float)
-        LimitedInventoryActor.SetActorValue("CarryWeight", iLimitedInventory.GetValueInt())
+        inventoryLimit = value as int
+        SetSliderOptionValue(limitedInventorySliderID, inventoryLimit as float)
     endif
 EndEvent
 
@@ -226,6 +236,8 @@ Event OnOptionHighlight (int option) ; Quick explanation of what different optio
         SetInfoText("Use a model from the base game for the cart. Warning: Once you have spawned a cart, you won't be able to change its model.")
     elseif (option == deleteCartButtonID)
         SetInfoText("Delete the cart so you can get a new one.")
+    elseif (option == horseFinderButtonID)
+        SetInfoText("Using this option makes the carriage consider any horse nearby, not just ones you own. Take care not to use this with an unowned horse nearby.")
     endif
 EndEvent
 

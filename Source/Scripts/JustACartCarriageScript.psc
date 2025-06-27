@@ -6,7 +6,6 @@ Scriptname JustACartCarriageScript extends ObjectReference
 Necessities:
 
 Possible future features:
--Cargo weight limit? Doable, but might cost a bit too much processing when calculating the weight. I'll have to look into that more
 -Also, might take another look at the OnKeyUp
 -Place to get the cart. Bandit cave just North of Whiterun is prime option, secondary options are the carts strewn around as unmarked locations.
 ...Actually, the unmarked location cart between Dawnstar and Morthal could be even better, it's right by the road as well
@@ -24,11 +23,27 @@ GlobalVariable property LimitedInventoryEnabled auto
 GlobalVariable property WeightLimit auto
 Faction property HorseFaction auto
 Actor property LimitedInventory auto
+Keyword property HorseKeyword auto
+GlobalVariable property bUseExperimentalHorseFinder auto
 
 ; Variables
 int tempKeyMap
 
 ; Funtions
+
+; https://ck.uesp.net/wiki/Talk:GetDialogueTarget_-_Actor modified for this specific use
+Actor Function GetHorse()
+	Actor horse
+	Int iLoopCount = 10
+	While iLoopCount > 0
+		iLoopCount -= 1
+		horse = Game.FindRandomActorFromRef(self , 512.0)
+		If horse != Game.GetPlayer() && horse.HasKeyword(HorseKeyword) 
+			Return horse
+		EndIf
+	EndWhile
+        Return None
+EndFunction
 
 ; Disables and then enables both horse and carriage CarriageAlias.GetRef()
 Function RefreshCartAndHorse(ObjectReference akObjectReference)
@@ -66,14 +81,19 @@ EndFunction
 ; Events
 
 Event OnActivate(ObjectReference akActionRef)
-    Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 2048.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
-    Actor horse = horseList[0]
+    Actor horse
+    if (bUseExperimentalHorseFinder.GetValueInt() == 0)
+        Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 2048.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
+        horse = horseList[0]
+    else
+        horse = GetHorse()
+    endif
+
     if (Game.GetPlayer().IsOnMount())
         Riding.SetValueInt(1)
     else
         Riding.SetValueInt(0)
     endif
-    LimitedInventory.SetActorValue("CarryWeight", WeightLimit.GetValueInt())
     int optionSelected = JustACartMessage.Show()
     if (optionSelected == 0) ; Tether/untether
         if (horse == none) ; Test if specific horse exists
