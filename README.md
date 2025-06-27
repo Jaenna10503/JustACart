@@ -36,6 +36,8 @@ Possibly compatibility with SkyrimVR (If I can figure it out, which is a big if.
 
 - An additional optional toggle to switch to the base game model for the cart. By default, the mod uses a custom model based on models from [Snazzy Diverse Carriages](https://www.nexusmods.com/skyrimspecialedition/mods/112041). You can switch between the base game and custom models by turning the toggle on and off. If you already have a cart, you'll need to delete it with the MCM button first and get a new one.
 
+- An optional toggle to expand what the mod considers an acceptable/usable horse. By default, the mod only recognises horses that are player owned and belong to the Player Horse Faction. With this toggle on, the carriage will accept any horse that has the ActorTypeHorse keyword. This can "steal" an NPC owned horse, even from right under them, if they happen to be close enough to the carriage when you're tethering a horse. You can always untether unwanted horses, but the tethering itself may cause minor mayhem to the AI.
+
 ### Future Plans for Optional Features
 
 Possibly further realism toggles.
@@ -45,6 +47,8 @@ Possibly further realism toggles.
 It's recommended to make sure you're facing forward, on a flat stretch of road before accessing the MCM to summon the cart. Summoning the cart where it doesn't have enough room may result in violent physics shenanigans.
 
 Also make sure the cart has enough room in front of it before moving the horse in front of it. For the same reason.
+
+Using the expanded compatibility option can make the carriage "steal" an NPC owned horse, even from right under them, if they happen to be close enough to the carriage when you're tethering a horse. You can always untether unwanted horses, but the tethering itself may cause minor mayhem to the AI. It's recommended to make sure such unwanted horses are a bit further away from the carriage when trying to tether a horse (around 5 metres or so should be enough).
 
 Due to the inherently janky physics of the cart, it's recommended that you stick to flat terrain, preferably roads, while traveling with your horse tethered to the cart. If you need to go to or through rough terrain, it's best to leave the cart waiting until you come back.
 
