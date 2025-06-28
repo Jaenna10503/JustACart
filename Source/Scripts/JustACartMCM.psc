@@ -1,19 +1,13 @@
 Scriptname JustACartMCM extends SKI_ConfigBase
 
 ; Properties
-GlobalVariable property bQuickUntether auto
-GlobalVariable property keyQuickUntether auto
-GlobalVariable property bLimitedInventory auto
-GlobalVariable property bOldCart auto
-GlobalVariable property bUseExperimentalHorseFinder auto
 Activator property OldCarriage auto
 Activator property NewCarriage auto
-ReferenceAlias property PlayerAlias auto
 Static property XMarker auto
 Worldspace property UsableWorldspaces auto
 Actor property LimitedInventoryActor auto
-; ReferenceAlias property CarriageAlias auto ; TO DO: Get rid of the alias, use a variable instead
 Message property DeleteMessage auto
+JustACartProperties property PropertyStorage auto
 
 ; Variables
 int quickUntetherToggleID
@@ -29,7 +23,7 @@ int oldCartToggleID
 int deleteCartFlags
 int deleteCartButtonID
 int horseFinderButtonID
-int inventoryLimit = 2000
+int worldSpaceToggleID
 string deleteCartString
 string cartSpawnerString
 bool deleting = false
@@ -53,12 +47,12 @@ EndFunction
 
 ; Summons the cart
 Function SummonCart()
-    if (Game.GetPlayer().GetWorldSpace() == UsableWorldspaces) ; We're not allowing summoning anywhere other than main Tamriel worldspace
-        ObjectReference marker = PlayerAlias.GetActorRef().PlaceAtMe(XMarker as form, 1, false, false)
-        MoveRefToPositionRelativeTo(marker, PlayerAlias.GetActorRef() , 384)
+    if (Game.GetPlayer().GetWorldSpace() == UsableWorldspaces || PropertyStorage.bExpandedWorldSpaces == true) ; We're not allowing summoning anywhere other than main Tamriel worldspace, unless you really want to
+        ObjectReference marker = Game.GetPlayer().PlaceAtMe(XMarker as form, 1, false, false)
+        MoveRefToPositionRelativeTo(marker, Game.GetPlayer() , 384)
         ObjectReference newCarriageref ; Temporary object reference variable
         if (carriage == none) ; If no carriage, give one
-            if (bOldCart.GetValueInt() == 0) ; See old cart toggle
+            if (PropertyStorage.bOldCart == 0) ; See old cart toggle
                 newCarriageref = marker.PlaceAtMe(NewCarriage)
             else
                 newCarriageref = marker.PlaceAtMe(OldCarriage)
@@ -102,6 +96,8 @@ EndFunction
 Event OnPageReset(string page)
     SetCursorFillMode(LEFT_TO_RIGHT)
 
+    LimitedInventoryActor.SetActorValue("CarryWeight", PropertyStorage.iInventoryLimit)
+
     int cartSpawnerHeaderID = AddHeaderOption("Cart Control")
     AddEmptyOption()
 
@@ -123,36 +119,41 @@ Event OnPageReset(string page)
     endif
     deleteCartButtonID = AddTextOption("", deleteCartString, deleteCartFlags)
 
+    int optionalID = AddHeaderOption("Optional Features")
+    AddEmptyOption()
+
+    if (PropertyStorage.bQuickUntether == 0)
+        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_DISABLED)
+    elseif (PropertyStorage.bQuickUntether == 1)
+        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_NONE)
+    endif
+    quickUntetherToggleID = AddToggleOption("Quick Untether", PropertyStorage.bQuickUntether) ; Whether quick untether is on or not
+    quickUntetherKeyID = AddKeyMapOption("Quick Untether Hotkey", PropertyStorage.keyQuickUntether, quickUntetherFlags) ; Which button quick untethers
+
+    if (PropertyStorage.bLimitedInventory == 0)
+        limitedInventoryFlags = OPTION_FLAG_DISABLED
+    elseif (PropertyStorage.bLimitedInventory == 1)
+        limitedInventoryFlags = OPTION_FLAG_NONE
+    endif
+    limitedInventoryToggleID = AddToggleOption("Limited Inventory", PropertyStorage.bLimitedInventory) ; Whether limited inventory is on or not
+    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", PropertyStorage.iInventoryLimit, "{0}", limitedInventoryFlags) ; Change inventory weight limit
+
+    oldCartToggleID = AddToggleOption("Use base game cart", PropertyStorage.bOldCart) ; What it says on the tin
+    AddEmptyOption()
+
     int experimentalID = AddHeaderOption("Experimental Features")
     AddEmptyOption()
 
-    if (bQuickUntether.GetValueInt() == 0)
-        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_DISABLED)
-    elseif (bQuickUntether.GetValueInt() == 1)
-        SetOptionFlags(quickUntetherKeyID, OPTION_FLAG_NONE)
-    endif
-    quickUntetherToggleID = AddToggleOption("Quick Untether", bQuickUntether.GetValueInt()) ; Whether quick untether is on or not
-    quickUntetherKeyID = AddKeyMapOption("Quick Untether Hotkey", keyQuickUntether.GetValueInt(), quickUntetherFlags) ; Which button quick untethers
-
-    if (bLimitedInventory.GetValueInt() == 0)
-        limitedInventoryFlags = OPTION_FLAG_DISABLED
-    elseif (bLimitedInventory.GetValueInt() == 1)
-        limitedInventoryFlags = OPTION_FLAG_NONE
-    endif
-    limitedInventoryToggleID = AddToggleOption("Limited Inventory", bLimitedInventory.GetValueInt()) ; Whether limited inventory is on or not
-    limitedInventorySliderID = AddSliderOption("Max Inventory Weight", inventoryLimit, "{0}", limitedInventoryFlags) ; Change inventory weight limit
-
-    oldCartToggleID = AddToggleOption("Use base game cart", bOldCart.GetValueInt()) ; What it says on the tin
-    horseFinderButtonID = AddToggleOption("Use expanded compatibility horse finder", bUseExperimentalHorseFinder.GetValueInt())
-    LimitedInventoryActor.SetActorValue("CarryWeight", inventoryLimit)
+    horseFinderButtonID = AddToggleOption("Use Expanded Compatibility Horse Finder", PropertyStorage.bUseExperimentalHorseFinder)
+    worldSpaceToggleID = AddToggleOption("Allow Other World Spaces", PropertyStorage.bExpandedWorldSpaces)
 EndEvent
 
 Event OnOptionSelect(int option)
     if (option == quickUntetherToggleID) ; Implementing quick untether toggle
-        if (bQuickUntether.GetValueInt() == 0)
-            bQuickUntether.SetValueInt(1)
+        if (PropertyStorage.bQuickUntether == 0)
+            PropertyStorage.bQuickUntether = 1
         else
-            bQuickUntether.SetValueInt(0)
+            PropertyStorage.bQuickUntether = 0
         endif
     elseif (option == cartSpawnerButtonID) ; Implementing cart spawner button. We're doing something, so cart controls go off, and we're specifying that we're summoning
         cartSpawnerFlags = OPTION_FLAG_DISABLED
@@ -165,22 +166,28 @@ Event OnOptionSelect(int option)
         deleting = true
         RegisterForSingleUpdateGameTime(0.0) ; This is more for symmetry and usefulness
     elseif (option == limitedInventoryToggleID) ; Implementing limited inventory toggle
-        if (bLimitedInventory.GetValueInt() == 0)
-            bLimitedInventory.SetValueInt(1)
+        if (PropertyStorage.bLimitedInventory == 0)
+            PropertyStorage.bLimitedInventory = 1
         else
-            bLimitedInventory.SetValueInt(0)
+            PropertyStorage.bLimitedInventory = 0
         endif
     elseif (option == oldCartToggleID) ; Implementing old cart toggle
-        if (bOldCart.GetValueInt() == 0)
-            bOldCart.SetValueInt(1)
+        if (PropertyStorage.bOldCart == 0)
+            PropertyStorage.bOldCart = 1
         else
-            bOldCart.SetValueInt(0)
+            PropertyStorage.bOldCart = 0
         endif
     elseif (option == horseFinderButtonID)
-        if (bUseExperimentalHorseFinder.GetValueInt() == 0)
-            bUseExperimentalHorseFinder.SetValueInt(1)
+        if (PropertyStorage.bUseExperimentalHorseFinder == 0)
+            PropertyStorage.bUseExperimentalHorseFinder = 1
         else
-            bUseExperimentalHorseFinder.SetValueInt(0)
+            PropertyStorage.bUseExperimentalHorseFinder = 0
+        endif
+    elseif (option == worldSpaceToggleID)
+        if (PropertyStorage.bExpandedWorldSpaces == 0)
+            PropertyStorage.bExpandedWorldSpaces = 1
+        else
+            PropertyStorage.bExpandedWorldSpaces = 0
         endif
     endif
     ForcePageReset() ; Make changes visible
@@ -201,9 +208,9 @@ Event OnOptionKeyMapChange(int option, int keyCode, string conflictControl, stri
 			continue = ShowMessage(msg, true, "$Yes", "$No")
 		endIf
         if (continue)
-            keyQuickUntether.SetValueInt(keyCode)
+            PropertyStorage.keyQuickUntether = keyCode
             SetKeyMapOptionValue(option, keyCode)
-            keyQuickUntether.SetValueInt(keyCode)
+            PropertyStorage.keyQuickUntether = keyCode
         endif
     endif
     ForcePageReset() ; Make changes visible
@@ -211,7 +218,7 @@ EndEvent
 
 Event OnOptionSliderOpen(int option) ; Implementing limited inventory slider
     if (option == limitedInventorySliderID)
-        SetSliderDialogStartValue(inventoryLimit as float)
+        SetSliderDialogStartValue(PropertyStorage.iInventoryLimit as float)
         SetSliderDialogDefaultValue(2000.0)
         SetSliderDialogRange(0.0, 10000.0)
         SetSliderDialogInterval(50.0)
@@ -220,8 +227,8 @@ EndEvent
 
 Event OnOptionSliderAccept (int option, float value) ; Ditto
     if (option == limitedInventorySliderID)
-        inventoryLimit = value as int
-        SetSliderOptionValue(limitedInventorySliderID, inventoryLimit as float)
+        PropertyStorage.iInventoryLimit = value as int
+        SetSliderOptionValue(limitedInventorySliderID, PropertyStorage.iInventoryLimit as float)
     endif
 EndEvent
 
@@ -235,9 +242,11 @@ Event OnOptionHighlight (int option) ; Quick explanation of what different optio
     elseif (option == oldCartToggleID)
         SetInfoText("Use a model from the base game for the cart. Warning: Once you have spawned a cart, you won't be able to change its model.")
     elseif (option == deleteCartButtonID)
-        SetInfoText("Delete the cart so you can get a new one.")
+        SetInfoText("Deletes the cart so you can get a new one.")
     elseif (option == horseFinderButtonID)
         SetInfoText("Using this option makes the carriage consider any horse nearby, not just ones you own. Take care not to use this with an unowned horse nearby.")
+    elseif (option == worldSpaceToggleID)
+        SetInfoText("Allow carriage to be summoned anywhere. Take care not to summon it in enclosed spaces, or where there's not enough room.")
     endif
 EndEvent
 

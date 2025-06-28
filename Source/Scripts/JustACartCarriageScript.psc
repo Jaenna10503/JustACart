@@ -15,16 +15,10 @@ Possible future features:
 Message property JustACartMessage auto
 Static property XMarker auto
 ObjectReference property Inventory auto
-GlobalVariable property Riding auto
-GlobalVariable property Tethered auto
-GlobalVariable property Keymap auto
-GlobalVariable property QuickUntetherEnabled auto
-GlobalVariable property LimitedInventoryEnabled auto
-GlobalVariable property WeightLimit auto
 Faction property HorseFaction auto
 Actor property LimitedInventory auto
 Keyword property HorseKeyword auto
-GlobalVariable property bUseExperimentalHorseFinder auto
+JustACartProperties property PropertyStorage auto
 
 ; Variables
 int tempKeyMap
@@ -82,7 +76,7 @@ EndFunction
 
 Event OnActivate(ObjectReference akActionRef)
     Actor horse
-    if (bUseExperimentalHorseFinder.GetValueInt() == 0)
+    if (PropertyStorage.bUseExperimentalHorseFinder == 0)
         Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 2048.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
         horse = horseList[0]
     else
@@ -90,9 +84,9 @@ Event OnActivate(ObjectReference akActionRef)
     endif
 
     if (Game.GetPlayer().IsOnMount())
-        Riding.SetValueInt(1)
+        PropertyStorage.bRiding = true
     else
-        Riding.SetValueInt(0)
+        PropertyStorage.bRiding = false
     endif
     int optionSelected = JustACartMessage.Show()
     if (optionSelected == 0) ; Tether/untether
@@ -100,34 +94,34 @@ Event OnActivate(ObjectReference akActionRef)
             Debug.Notification("Couldn't find a horse.")
         elseif (horse.isDead()) ; Also test if she's alive
             Debug.Notification("Your horse is dead. Better get a new one.")
-        elseif (Riding.GetValueInt() == 1) ; Test if riding but NOT tethered
+        elseif (PropertyStorage.bRiding == true) ; Test if riding but NOT tethered
             Debug.MessageBox("Better dismount before fiddling with the tethers...")
-        elseif (Riding.GetValueInt() == 0 && Tethered.GetValueInt() == 1) ; Test if NOT riding AND tethered (Regular Untether)
+        elseif (PropertyStorage.bRiding == false && PropertyStorage.bTethered == true) ; Test if NOT riding AND tethered (Regular Untether)
             RefreshCartAndHorse(horse) ; Could just "inline" this, but eh, I already made the function
-            Tethered.SetValueInt(0)
-        elseif (Riding.GetValueInt() == 0 && Tethered.GetValueInt() == 0) ; Test if NOT riding NOR tethered (Tether)
+            PropertyStorage.bTethered = false
+        elseif (!PropertyStorage.bRiding && !PropertyStorage.bTethered) ; Test if NOT riding NOR tethered (Tether)
             RefreshCartAndHorse(horse)
             Utility.Wait(0.1)
             BringHorseToCart(horse)
             Utility.Wait(0.1)
             self.SetMotionType(Motion_Dynamic)
             self.TetherToHorse(horse)
-            if (QuickUntetherEnabled.GetValueInt() == 1)
+            if (PropertyStorage.bQuickUntether == 1)
                 UnregisterForAllKeys()
                 Utility.Wait(0.1)
-                RegisterForKey(Keymap.GetValueInt())
-                tempKeyMap = Keymap.GetValueInt() ; We've already registered for a key, switching Keymap value doesn't switch the key we're listening for
+                RegisterForKey(PropertyStorage.keyQuickUntether)
+                tempKeyMap = PropertyStorage.keyQuickUntether ; We've already registered for a key, switching Keymap value doesn't switch the key we're listening for
             endif
-            Tethered.SetValueInt(1)
+            PropertyStorage.bTethered = true
         endif
     elseif (optionSelected == 1) ; Access inventory
-        if (LimitedInventoryEnabled.GetValueInt() == 0)
+        if (PropertyStorage.bLimitedInventory == 0)
             Inventory.Activate(Game.GetPlayer(), true)
-        elseif (LimitedInventoryEnabled.GetValueInt() == 1)
+        elseif (PropertyStorage.bLimitedInventory == 1)
             LimitedInventory.OpenInventory(true)
         endif
     elseif (optionSelected == 2) ; Summon Horse
-        if ((Riding.GetValueInt() == 1 || Tethered.GetValueInt() == 1) && !horse.IsDead())
+        if ((PropertyStorage.bRiding || PropertyStorage.bTethered) && !horse.IsDead())
             Debug.Notification("Your horse is fine where she is.")
         elseif (horse == none) ; If no horse
             Debug.Notification("Couldn't find a horse.")
@@ -143,14 +137,14 @@ Event OnActivate(ObjectReference akActionRef)
 EndEvent
 
 Event OnKeyUp(int keyCode, Float holdTime) ; Implementing the quick untether
-    if (QuickUntetherEnabled.GetValueInt() == 1 && !Utility.IsInMenuMode() && !UI.IsMenuOpen("Crafting Menu")) ; Make sure the quick untether option is enabled, and the player is NOT in a menu
-        if (keyCode == Keymap.GetValueInt() || (keyCode != Keymap.GetValueInt() && keyCode == tempKeyMap)) ; Use currently set hotkey normally, or the old (temp) one if the key was changed while registered for the old one
-            if (Tethered.GetValueInt() == 1)
+    if (PropertyStorage.bQuickUntether == 1 && !Utility.IsInMenuMode() && !UI.IsMenuOpen("Crafting Menu")) ; Make sure the quick untether option is enabled, and the player is NOT in a menu
+        if (keyCode == PropertyStorage.keyQuickUntether || (keyCode != PropertyStorage.keyQuickUntether && keyCode == tempKeyMap)) ; Use currently set hotkey normally, or the old (temp) one if the key was changed while registered for the old one
+            if (PropertyStorage.bTethered)
                 self.DisableNoWait()
                 Utility.Wait(0.1)
                 self.Enable()
                 self.SetMotionType(Motion_Keyframed)
-                Tethered.SetValueInt(0)
+                PropertyStorage.bTethered = false
                 Utility.Wait(0.1)
                 UnregisterForAllKeys()
             endif
@@ -159,6 +153,6 @@ Event OnKeyUp(int keyCode, Float holdTime) ; Implementing the quick untether
 EndEvent
 
 Event OnLoad() ; There's no situation where you'd load the cart in and not want it untethered and fixed
-    Tethered.SetValueInt(0) 
+    PropertyStorage.bTethered = false
     self.SetMotionType(Motion_Keyframed)
 EndEvent

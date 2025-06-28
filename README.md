@@ -38,6 +38,8 @@ Possibly compatibility with SkyrimVR (If I can figure it out, which is a big if.
 
 - An optional toggle to expand what the mod considers an acceptable/usable horse. By default, the mod only recognises horses that are player owned and belong to the Player Horse Faction. With this toggle on, the carriage will accept any horse that has the ActorTypeHorse keyword. This can "steal" an NPC owned horse, even from right under them, if they happen to be close enough to the carriage when you're tethering a horse. You can always untether unwanted horses, but the tethering itself may cause minor mayhem to the AI.
 
+- An optional toggle that allows the player to summon the cart anywhere. Because who am I to say no if you want to have silly fun.
+
 ### Future Plans for Optional Features
 
 Possibly further realism toggles.
