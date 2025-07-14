@@ -230,6 +230,7 @@ Event OnOptionSliderAccept (int option, float value) ; Ditto
         PropertyStorage.iInventoryLimit = value as int
         SetSliderOptionValue(limitedInventorySliderID, PropertyStorage.iInventoryLimit as float)
     endif
+    LimitedInventoryActor.SetActorValue("CarryWeight", PropertyStorage.iInventoryLimit)
 EndEvent
 
 Event OnOptionHighlight (int option) ; Quick explanation of what different options do

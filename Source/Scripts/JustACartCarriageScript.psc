@@ -75,6 +75,7 @@ EndFunction
 ; Events
 
 Event OnActivate(ObjectReference akActionRef)
+    LimitedInventory.SetActorValue("CarryWeight", PropertyStorage.iInventoryLimit)
     Actor horse
     if (PropertyStorage.bUseExperimentalHorseFinder == 0)
         Actor[] horseList = MiscUtil.ScanCellNPCsByFaction(HorseFaction, self, 2048.0, 0, 127, true) ; PapyrusUtil SE to the rescue!
